@@ -1,24 +1,23 @@
-# comento
+## 코멘트 지원동기
 
-## Project setup
-```
-yarn install
-```
+비전공자 출신이라 주변에 개발자가 많이 없다보니, 개발자 커리어를 시작하면서 들을 수 있는 조언의 한계가 있었습니다. 코멘토와 같은 서비스의 고마움을 느낍니다. 프론트엔드 개발자로의 커리어를 코멘토에서 시작하고 싶습니다.
 
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
 
-### Compiles and minifies for production
-```
-yarn build
-```
+- [x] **Vue.js**, **less**, **bootstrap**, **axios** 사용
 
-### Lints and fixes files
-```
-yarn lint
-```
+- [x] **반응형 웹**으로 개발
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+- [x] **크로스 브라우징**에 대응 -> 크롬 버전 78.0(웹), 사파리 버전 13(웹)
+
+- [x] **1. 리스트 불러오기 (infinite-loading)**
+
+- [x] **2. 정렬 (오름차순, 내림차순)** -> api 테스트 결과, ordering이 작동하지 않았습니다. api 응답대로 적용된 상태입니다.
+
+- [x] **3. 필터 (modal)** -> 별도 컴퍼넌트로는 분리했으나, 시간제한으로 오류사항을 수정하지 못했습니다.
+
+- [x] **4. 광고 삽입**
+
+- [ ] **+ VOC(고객센터 접수건)** -> 반영하지 못했습니다.
+
+- [ ] 구현 세부내용 중 디테일 페이지를 완성하지 못했습니다.
+
