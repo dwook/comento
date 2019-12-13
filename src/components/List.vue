@@ -84,6 +84,7 @@ export default {
 .list-item {
   border: 1px solid @sub-color;
   margin-bottom: 30px;
+  height: 100%;
   .header {
     padding: 15px;
     text-align: left;
