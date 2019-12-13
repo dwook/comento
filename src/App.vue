@@ -4,10 +4,8 @@
       <b-row align-h="center">
         <b-col sm="12" md="6">
           <div class="section-filter">
-            <b-button v-b-modal.modal-filter variant="outline-success"
-              >필터</b-button
-            >
-            <Modal
+            <b-button v-b-modal.modal-filter variant="outline-success">필터</b-button>
+            <Filters
               :category="category"
               :categoryOptionList="categoryOptionList"
               :handleCategoryFilter="handleCategoryFilter"
@@ -19,15 +17,13 @@
                 class="asc"
                 v-on:click="handleSortAsc"
                 :class="{ selected: ord === 'asc' }"
-                >오름차순</b-button
-              >
+              >오름차순</b-button>
               <b-button
                 variant="light"
                 class="desc"
                 v-on:click="handleSortDesc"
                 :class="{ selected: ord === 'desc' }"
-                >내림차순</b-button
-              >
+              >내림차순</b-button>
             </div>
           </div>
         </b-col>
@@ -37,51 +33,12 @@
     <b-container>
       <b-row align-h="center">
         <b-col sm="12" md="6">
-          <ul class="list-group">
-            <li class="list-item" v-for="(item, index) in items" :key="index">
-              <div class="article" v-if="item.category_id">
-                <div class="header">
-                  <span>{{ item.category_name }}</span>
-                  <span class="num">{{ item.id }}</span>
-                </div>
-                <div class="body">
-                  <div class="details">
-                    <span class="email">{{ item.email }}</span>
-                    <span class="created_at">{{ item.created_at }}</span>
-                  </div>
-                  <div class="text">
-                    <p class="title">{{ item.title }}</p>
-                    <p class="contents">{{ item.contents }}</p>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="ad">
-                <div>
-                  <div class="header">
-                    <p>Sponsored</p>
-                  </div>
-                  <div class="body">
-                    <img
-                      :src="`https://cdn.comento.kr/assignment/${item.img}`"
-                    />
-                    <div class="text">
-                      <p class="title">{{ item.title }}</p>
-                      <p class="contents">{{ item.contents }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </li>
-          </ul>
-          <div v-if="loading">
-            <transition name="fade">
-              <b-spinner
-                v-show="loading"
-                variant="success"
-                label="Spinning"
-              ></b-spinner>
-            </transition>
-          </div>
+          <List
+            :items="items"
+            :loading="loading"
+            :categoryOptionList="categoryOptionList"
+            :getDetails="getDetails"
+          />
         </b-col>
       </b-row>
     </b-container>
@@ -89,41 +46,44 @@
 </template>
 
 <script>
-import axios from 'axios';
-import qs from 'qs';
-import debounce from 'lodash/debounce';
-import Modal from './components/Modal.vue';
-import { BASE_URL } from './constant';
+import axios from "axios";
+import qs from "qs";
+import debounce from "lodash/debounce";
+import Filters from "./components/Filters";
+import List from "./components/List";
+import { BASE_URL } from "./constant";
 
 axios.defaults.baseURL = BASE_URL;
 
 export default {
-  name: 'app',
-  data: () => {
+  name: "app",
+  data() {
     return {
       loading: false,
       itemsCurrentPage: 1,
       itemsLastPage: null,
       adsCurrentPage: 1,
       adsLastPage: null,
-      ord: 'asc',
+      ord: "asc",
       limit: 10,
       items: [],
       ads: [],
       maxIndex: 1,
       category: [1, 2, 3],
-      categoryOptionList: []
+      categoryOptionList: [],
+      details: {}
     };
   },
   components: {
-    Modal
+    Filters,
+    List
   },
   created() {
     this.handleDebouncedScroll = debounce(this.handleScroll, 100);
-    window.addEventListener('scroll', this.handleDebouncedScroll);
+    window.addEventListener("scroll", this.handleDebouncedScroll);
   },
   destroyed() {
-    window.removeEventListener('scroll', this.handleDebouncedScroll);
+    window.removeEventListener("scroll", this.handleDebouncedScroll);
   },
   mounted() {
     this.getAds();
@@ -155,13 +115,13 @@ export default {
       this.adsLastPage = null;
     },
     handleSortAsc() {
-      this.ord = 'asc';
+      this.ord = "asc";
       this.handleReset();
       this.getAds();
       this.getList();
     },
     handleSortDesc() {
-      this.ord = 'desc';
+      this.ord = "desc";
       this.handleReset();
       this.getAds();
       this.getList();
@@ -174,7 +134,7 @@ export default {
     async getList() {
       this.loading = true;
       await axios
-        .get('/api/list', {
+        .get("/api/list", {
           params: {
             page: this.itemsCurrentPage,
             ord: this.ord,
@@ -187,14 +147,23 @@ export default {
         })
         .then(async res => {
           this.itemsLastPage = res.data.list.last_page;
-          const data = res.data.list.data;
-          let items = data.map(item => {
+          let items = res.data.list.data;
+
+          await Promise.all(
+            items.map(async item => {
+              const details = await this.getDetails(item.id);
+              item.email = details.data.info.user.email;
+            })
+          );
+
+          items.map(item => {
             const category = this.categoryOptionList.find(
               category => category.id === item.category_id
             );
             item.category_name = category.name;
             return item;
           });
+
           this.items.push(...items);
           if (this.ads.length < this.limit * 0.5) {
             this.adsCurrentPage++;
@@ -213,7 +182,7 @@ export default {
     },
     async getCategory() {
       this.loading = true;
-      await axios.get('/api/category').then(res => {
+      await axios.get("/api/category").then(res => {
         this.categoryOptionList.push(...res.data.list);
         this.loading = false;
       });
@@ -221,7 +190,7 @@ export default {
     async getAds() {
       this.loading = true;
       await axios
-        .get('/api/ads', {
+        .get("/api/ads", {
           params: {
             page: this.adsCurrentPage,
             limit: this.limit
@@ -231,34 +200,26 @@ export default {
           this.ads.push(...res.data.list.data);
           this.loading = false;
         });
+    },
+    getDetails(id) {
+      this.loading = true;
+      return axios.get("/api/view", {
+        params: {
+          id
+        }
+      });
     }
   }
 };
 </script>
-
 <style lang="less">
-@mobile: ~'only screen and (max-width: 480px)';
-@main-color: #00c854;
-@sub-color: #e1e4e7;
-
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #282c30;
-  margin-top: 20px;
-}
-
-li {
-  list-style: none;
-}
+@import "./base.less";
 
 .section-filter {
   display: flex;
   background: #fff;
   align-items: center;
-  margin-bottom: 10px;
+  margin: 10px 0;
   .sort {
     margin-left: auto;
     button {
@@ -271,120 +232,5 @@ li {
       }
     }
   }
-}
-
-.list-item {
-  border: 1px solid @sub-color;
-  margin-bottom: 30px;
-  .header {
-    padding: 15px;
-    text-align: left;
-  }
-  .body {
-    padding: 15px;
-    text-align: left;
-  }
-  p {
-    margin: 0;
-  }
-  .title {
-    font-weight: bold;
-  }
-  .title,
-  .contents {
-    text-overflow: ellipsis;
-    overflow: hidden;
-  }
-}
-
-.article {
-  .header {
-    display: flex;
-    border-bottom: 1px solid @sub-color;
-    .num {
-      margin-left: auto;
-    }
-  }
-  p {
-    white-space: nowrap;
-  }
-}
-
-.ad {
-  background: lighten(@main-color, 55%);
-  .header {
-    color: @main-color;
-    font-weight: bold;
-  }
-  .body {
-    padding-top: 0;
-    &:after {
-      display: block;
-      content: '';
-      clear: both;
-    }
-    img {
-      width: 50%;
-      float: left;
-    }
-    .text {
-      width: 50%;
-      padding: 0 15px;
-      box-sizing: border-box;
-      float: left;
-      .title {
-        line-height: 1.4em;
-        height: 2.8em;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        margin-bottom: 15px;
-      }
-      .contents {
-        line-height: 1.4em;
-        height: 5.6em;
-        display: -webkit-box;
-        -webkit-line-clamp: 4;
-        -webkit-box-orient: vertical;
-      }
-    }
-  }
-}
-
-@media @mobile {
-  .ad {
-    .body {
-      img {
-        width: 100%;
-        margin-bottom: 15px;
-      }
-      .text {
-        width: 100%;
-        .contents {
-          -webkit-line-clamp: 2;
-          height: 2.8em;
-        }
-      }
-    }
-  }
-}
-
-.modal-backdrop {
-  background: #000;
-  opacity: 0.7;
-}
-
-.modal-body {
-  text-align: center;
-  span {
-    padding: 0 10px;
-  }
-  input[type='checkbox'] {
-    margin-right: 5px;
-  }
-}
-
-.modal-footer {
-  text-align: right;
 }
 </style>
