@@ -43,9 +43,9 @@
   </div>
 </template>
 
-
 <script>
 import Details from "./Details";
+
 export default {
   props: {
     items: Array,

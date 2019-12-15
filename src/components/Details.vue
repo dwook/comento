@@ -1,4 +1,3 @@
-
 <template>
   <b-modal id="modal-details" :hide-footer="true">
     <template>
@@ -25,8 +24,6 @@
   </b-modal>
 </template>
 
-
-
 <script>
 export default {
   props: {
@@ -34,7 +31,6 @@ export default {
   }
 };
 </script>
-
 
 <style lang="less" scoped>
 @import "../base.less";

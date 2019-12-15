@@ -39,9 +39,9 @@ export default {
 };
 </script>
 
-
 <style lang="less" scoped>
 @import "../base.less";
+
 .modal-backdrop {
   background: #000;
   opacity: 0.7;
